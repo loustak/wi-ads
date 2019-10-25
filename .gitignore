@@ -1,4 +1,6 @@
+.metals
 target
 project
+rdd
 data/data-students.json
 **/.idea/workspace.xml **/.idea/tasks.xml
