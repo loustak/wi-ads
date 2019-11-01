@@ -1,10 +1,12 @@
+package clean
 
-
+import clean.DataCleansing._
 import org.apache.spark.sql.SparkSession
 
-import dataCleansing._
-
 object Cleaner extends App {
+
+  val dataPath = "data"
+  val data = dataPath + "/sample-1000.json"
 
   val context= SparkSession
     .builder
@@ -18,19 +20,22 @@ object Cleaner extends App {
   val raw_data =  context.read.format("json")
     .option("header", "true")
     .option("inferSchema", "true")
-    .load("sample-1000.json")
+    .load(data)
 
   //Keep only columns that we need for ML
-  val selected_data = raw_data.select("network", "appOrSite",  "timestamp","bidfloor","size", "interests","label")
+  val selected_data = raw_data.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label")
 
 
   // Cleaning OS column
   val dataWithOsCleaned = cleanOsColumn(selected_data)
-  println("dataset ::::::::"+ dataWithOsCleaned.show())
+  println("dataset ::::::::")
+  dataWithOsCleaned.show()
+
+  // Cleaning Timestamp column
+  val dataWithTimestampCleaned = cleanTimestampColumn(dataWithOsCleaned)
+  dataWithTimestampCleaned.show()
+
   context.close()
-
-
-
 }
 
 
