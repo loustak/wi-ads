@@ -1,14 +1,10 @@
-import org.apache.spark.sql.SparkSession
+import java.io.File
+
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 object Main {
 
     def main(args: Array[String]): Unit = {
-
-        val newline = System.lineSeparator()
-        val dataPath = "data"
-        val rddPath = "rdd"
-        val baseDataPath = dataPath + "/data-students.json"
-        val validJsonRddPath = rddPath + "/valid-json"
 
         val spark = SparkSession.builder()
             // Sets the Spark master URL to connect to, such as "local" to run locally, "local[4]"
@@ -20,24 +16,10 @@ object Main {
 
         val sc = spark.sparkContext
 
-        // Clean the file to produce valid JSON
-        val text = sc.textFile(baseDataPath).zipWithIndex()
+        val dataFrame = spark.read.json(Path.baseDataPath)
+        dataFrame.show(5)
 
-        val count = text.count()
-
-        val textWithComma = text
-            .map{ case (line, i) =>
-                if (i == 0) {
-                    "[" + newline + line + ","
-                } else if (i == count - 1) {
-                    line + newline + "]"
-                } else {
-                    line + ","
-                }
-            }
-
-        textWithComma.saveAsTextFile(validJsonRddPath)
-
+        sc.stop()
         spark.stop()
     }
 }
