@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 object Cleaner extends App {
 
   val dataPath = "data"
-  val data = dataPath + "/sample-1000.json"
+  val data = dataPath + "data-students.json"
 
   val context= SparkSession
     .builder
@@ -15,7 +15,6 @@ object Cleaner extends App {
     .getOrCreate()
 
   context.sparkContext.setLogLevel("WARN")
-
 
   val raw_data =  context.read.format("json")
     .option("header", "true")
@@ -34,6 +33,11 @@ object Cleaner extends App {
   // Cleaning Timestamp column
   val dataWithTimestampCleaned = cleanTimestampColumn(dataWithOsCleaned)
   dataWithTimestampCleaned.show()
+
+  // Cleaning Network column
+  val datawithNetworkCleaned = dataWithTimestampCleaned.withColumn("network",cleanNetworkColumn(selected_data("network")))
+  tolowerCase(datawithNetworkCleaned,"network")
+
 
   context.close()
 }

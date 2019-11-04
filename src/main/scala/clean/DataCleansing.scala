@@ -2,8 +2,12 @@ package clean
 
 import java.text.SimpleDateFormat
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{ColumnName, DataFrame, SparkSession, TypedColumn}
 import org.apache.spark.sql.functions.{lower, udf, when}
+import org.apache.spark.sql.Column
+import scala.util.matching.Regex
+import org.apache.spark.sql.functions.regexp_replace
+
 
 
 object DataCleansing {
@@ -37,12 +41,11 @@ object DataCleansing {
   // Add a new category "other" for values where occurrence is less than the limit treshold
   def mainLabelsVSother(src: DataFrame, columnName: String) : DataFrame = {
 
-    // => 300 for the sample-1000 else for the data-students.json set it to 100000
-    val treshold = 300
+    val treshold = 100000
 
     val counts = src.groupBy(columnName).count()
-    val joined = src.join(counts, Seq("os"))
-    joined.withColumn("os", when(joined("count") >= treshold, joined("os")).otherwise("other"))
+    val joined = src.join(counts, Seq(columnName))
+    joined.withColumn(columnName, when(joined("count") >= treshold, joined(columnName)).otherwise("other"))
   }
 
   def cleanOsColumn(src: DataFrame):DataFrame = {
@@ -53,44 +56,49 @@ object DataCleansing {
 
   }
 
-  // ----------- Cleaning interests functions ------------- //
 
-  //TODO
-  def replace_InterestRegex(src: DataFrame, interests:List[String]):DataFrame = ???
-
-  /*
-      val regex = new Regex("IAB-(.*)");
-      val interestsList = interests.split(',').map(interest => regex.replace.....)
-  */
-
-  //TODO
-  def cleanInterestsColumn(src: DataFrame): DataFrame = ???
-
-  //val interests = List("IAB1","IAB2","IAB3","IAB4","IAB5","IAB6","IAB7","IAB8","IAB9","IAB10","IAB11","IAB12","IAB13","IAB14","IAB15","IAB16","IAB17","IAB18","IAB19","IAB20","IAB21")
-  //val l= src.withColumn("interests", when("interests", ))
-    // First step = Remplacer les codes détaillés par des codes plus généralistes
-    // Second step = Splitter les lists de plusieurs interests => explode function
-    // Third step = For int
+  // ----------- Cleaning network functions ------------- //
 
 
-  // ----------- Cleaning columns functions ------------- //
+  def getMNCbyCode (code: String): String = {
 
-  //TODO
+    // France Mobile Country Code
+    val MCCFrance = "208-"
 
-  def cleanNetworkColumn(src: DataFrame):DataFrame = ???
+    // France main Mobile Network Code
+    val MNCFrance = Map("orange"->List("01","02","91","95"),
+      "sfr"->List("09","10","11","13"),
+      "bouygues"->List("20","21"),"free"->List("15","16"))
+
+    if(code.startsWith(MCCFrance)) {
+      val mnc = code.substring(4)
+      val res = MNCFrance.map(m=> {
+      val contained = m._2.contains(mnc)
+      if (contained) m._1
+        else ""
+      }).mkString("")
+      res
+    }
+    else "other"
+  }
+
+
+  def cleanNetworkColumn = {
+    udf {(row: String) =>
+      getMNCbyCode(row)
+    }
+  }
+
+
+  // ----------- Cleaning timestamp functions ------------- //
 
   def cleanTimestampColumn(src: DataFrame): DataFrame = {
     // To apply a function to each value of a column
+
     val timestamp_clean_udf = udf(timeStampToDate _)
     val newSrc = src.withColumn("timestamp", timestamp_clean_udf($"timestamp"))
     newSrc
   }
-
-  def cleanSizeColumn(src: DataFrame):DataFrame = ???
-
-  def cleanBidFloorColumn(src: DataFrame):DataFrame = ???
-
-  def cleanTypeColumn(src: DataFrame):DataFrame = ???
 
   /**
    * To convert a timestamp to an Hour hh:mm:ss
@@ -104,5 +112,6 @@ object DataCleansing {
     val date = df.format(ts)
     date.split(':')(0)
   }
+
 
 }
