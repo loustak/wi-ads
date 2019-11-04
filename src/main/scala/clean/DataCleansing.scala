@@ -2,11 +2,11 @@ package clean
 
 import java.text.SimpleDateFormat
 
-import org.apache.spark.sql.{ColumnName, DataFrame, SparkSession, TypedColumn}
-import org.apache.spark.sql.functions.{lower, udf, when}
-import org.apache.spark.sql.Column
-import scala.util.matching.Regex
-import org.apache.spark.sql.functions.regexp_replace
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import scala.collection.mutable
 
 
 
@@ -83,7 +83,7 @@ object DataCleansing {
   }
 
 
-  def cleanNetworkColumn = {
+  def cleanNetworkColumn: UserDefinedFunction = {
     udf {(row: String) =>
       getMNCbyCode(row)
     }
@@ -94,10 +94,8 @@ object DataCleansing {
 
   def cleanTimestampColumn(src: DataFrame): DataFrame = {
     // To apply a function to each value of a column
-
     val timestamp_clean_udf = udf(timeStampToDate _)
-    val newSrc = src.withColumn("timestamp", timestamp_clean_udf($"timestamp"))
-    newSrc
+    src.withColumn("timestamp", timestamp_clean_udf($"timestamp"))
   }
 
   /**
@@ -113,5 +111,25 @@ object DataCleansing {
     date.split(':')(0)
   }
 
+  // ----------- Cleaning interests functions ------------- //
+
+  def cleanInterestsColumn(src: DataFrame): DataFrame = {
+    val df = src.where(col("interests").isNotNull)
+    val interestsCleaned = df.withColumn("interests", split($"interests", ",").cast("array<String>"))
+    createInterestsColumn(interestsCleaned)
+  }
+
+  def createInterestsColumn(src: DataFrame): DataFrame = {
+    ???
+  }
+
+  def generalInterests(array: mutable.WrappedArray[String]): Array[String] = {
+    // We are doing toSet to only keep one occurrence for each interests code
+    array.map(x => if (x.startsWith("IAB")) {
+      x.split("-")(0).toUpperCase()
+    } else {
+      ""
+    }).toSet.toArray
+  }
 
 }

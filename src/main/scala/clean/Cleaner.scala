@@ -38,6 +38,9 @@ object Cleaner extends App {
   val datawithNetworkCleaned = dataWithTimestampCleaned.withColumn("network",cleanNetworkColumn(selected_data("network")))
   tolowerCase(datawithNetworkCleaned,"network")
 
+  // Cleaning Interests
+  val dataWithInterestsCleaned = cleanInterestsColumn(datawithNetworkCleaned)
+  //dataWithInterestsCleaned.show()
 
   context.close()
 }

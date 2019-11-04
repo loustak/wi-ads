@@ -17,6 +17,8 @@ object Calculs {
       .appName("ADS click prediction") // The app name in the web UI
       .getOrCreate()
 
+    import spark.implicits._ // To use the "$" keyword
+
     spark.sparkContext.setLogLevel("ERROR")
 
     val rtbData = spark.read.json(data)
@@ -69,24 +71,26 @@ object Calculs {
 
     // Est ce que timestamp a une influence sur le click ?
     println("\nClick in function of timestamp column: ")
-    val nbPubTime = allData.groupBy("timestamp").count().as("totalpub")
-    val nbTrueClickTime = trueClick.groupBy("timestamp").count()
-    val fuseTime = nbTrueClickTime.join(nbPubTime, "timestamp")
-    fuseTime.foreach(x => println(x(0) + "h = " + x(1) + " ads for a total of " + x(2) + " displayed."))
+    val nbPubTime = allData.groupBy("timestamp").count().withColumnRenamed("count", "totalads")
+    val nbTrueClickTime = trueClick.groupBy("timestamp").count().withColumnRenamed("count", "adshour")
+    val fuseTime = nbTrueClickTime.join(nbPubTime, "timestamp").withColumn("ratio", $"adshour" / $"totalads" * 100)
+    fuseTime.show()
+    fuseTime.foreach(x => println(x(0) + "h = " + x(1) + " ads for a total of " + x(2) + " displayed. Ratio: " + x(3) + "%"))
 
-    /*rtbData.select("appOrSite").distinct().show()
-    rtbData.select("bidfloor").distinct().show()
-    rtbData.select("city").distinct().show() // drop
-    rtbData.select("exchange").distinct().show()
-    rtbData.select("interests").distinct().show()
-    rtbData.select("media").distinct().show()
-    rtbData.select("network").distinct().show()
-    rtbData.select("os").distinct().show()
-    rtbData.select("publisher").distinct().show()
-    rtbData.select("size").distinct().show()
-    rtbData.select("timestamp").distinct().show()
-    rtbData.select("type").distinct().show()
-    rtbData.select("user").distinct().show()*/
+    /* rtbData.select("appOrSite").distinct().show()
+     rtbData.select("bidfloor").distinct().show()
+     rtbData.select("city").distinct().show() // drop
+     rtbData.select("exchange").distinct().show()
+     rtbData.select("interests").distinct().show()
+     rtbData.select("media").distinct().show()
+     rtbData.select("network").distinct().show()
+     rtbData.select("os").distinct().show()
+     rtbData.select("publisher").distinct().show()
+     rtbData.select("size").distinct().show()
+     rtbData.select("timestamp").distinct().show()
+     rtbData.select("type").distinct().show()
+     rtbData.select("user").distinct().show()*/
+    //rtbData.select("network").distinct().show(100000, false)
 
   }
 
