@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 
 object Cleaner extends App {
 
-  val dataPath = "data"
+  val dataPath = "data/"
   val data = dataPath + "data-students.json"
 
   val context= SparkSession
@@ -39,8 +39,8 @@ object Cleaner extends App {
   tolowerCase(datawithNetworkCleaned,"network")
 
   // Cleaning Interests
-  val dataWithInterestsCleaned = cleanInterestsColumn(datawithNetworkCleaned)
-  //dataWithInterestsCleaned.show()
+  val dataWithInterestsCleaned = cleanInterestsColumn(dataWithTimestampCleaned)
+  dataWithInterestsCleaned.show()
 
   context.close()
 }

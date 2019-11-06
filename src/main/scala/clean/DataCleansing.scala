@@ -45,7 +45,7 @@ object DataCleansing {
 
     val counts = src.groupBy(columnName).count()
     val joined = src.join(counts, Seq(columnName))
-    joined.withColumn(columnName, when(joined("count") >= treshold, joined(columnName)).otherwise("other"))
+    joined.withColumn(columnName, when(joined("count") >= treshold, joined(columnName)).otherwise("other")).drop("count")
   }
 
   def cleanOsColumn(src: DataFrame):DataFrame = {
@@ -116,20 +116,39 @@ object DataCleansing {
   def cleanInterestsColumn(src: DataFrame): DataFrame = {
     val df = src.where(col("interests").isNotNull)
     val interestsCleaned = df.withColumn("interests", split($"interests", ",").cast("array<String>"))
+    val interests_clean_udf = udf(generalInterests _)
+    interestsCleaned.withColumn("interests", interests_clean_udf($"interests"))
     createInterestsColumn(interestsCleaned)
   }
 
-  def createInterestsColumn(src: DataFrame): DataFrame = {
-    ???
-  }
-
   def generalInterests(array: mutable.WrappedArray[String]): Array[String] = {
-    // We are doing toSet to only keep one occurrence for each interests code
-    array.map(x => if (x.startsWith("IAB")) {
-      x.split("-")(0).toUpperCase()
+    var set = array.map(x => if (x.startsWith("IAB")) {
+      x.toUpperCase()
     } else {
       ""
-    }).toSet.toArray
+    }).toSet
+    set -= ""
+    set.toArray
   }
 
+  /**
+   * Function to create a column for each interests of a row
+   *
+   * @param src
+   * @return
+   */
+  def createInterestsColumn(src: DataFrame): DataFrame = {
+    val v = src.select("interests").rdd.map(r => r(0)).collect()
+    var setInterests = Set[String]()
+    var newSrc = src
+    v.foreach(x => {
+      x.asInstanceOf[mutable.WrappedArray[String]].foreach(r => {
+        setInterests += r
+      })
+    })
+    setInterests.foreach(x => {
+      newSrc = newSrc.withColumn(x.toString, when(array_contains($"interests", x.toString), 1).otherwise(0))
+    })
+    newSrc
+  }
 }
