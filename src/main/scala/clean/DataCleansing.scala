@@ -179,4 +179,22 @@ object DataCleansing {
     }
   }
 
+  // Apply all the cleaning functions
+  def clean_data(src: DataFrame): DataFrame = {
+    // Cleaning OS column
+    val dataWithOsCleaned = cleanOsColumn(src)
+
+    // Cleaning Timestamp column
+    val dataWithTimestampCleaned = cleanTimestampColumn(dataWithOsCleaned)
+
+    // Cleaning Network column
+    val datawithNetworkCleaned = cleanNetworkColumn(dataWithTimestampCleaned)
+
+    // Cleaning Interests column
+    val dataWithInterestsCleaned = cleanInterestsColumn(datawithNetworkCleaned)
+
+    // Cleaning Size column
+    cleanSizeColumn(dataWithInterestsCleaned)
+  }
+
 }
