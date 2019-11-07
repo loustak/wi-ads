@@ -59,6 +59,11 @@ object DataCleansing {
 
   // ----------- Cleaning network functions ------------- //
 
+  def cleanNetworkColumn(src: DataFrame): DataFrame = {
+    val df = src.where(col("network").isNotNull)
+    val datawithNetworkCleaned = df.withColumn("network", udfCleanNetworkColumn(src("network")))
+    tolowerCase(datawithNetworkCleaned, "network")
+  }
 
   def getMNCbyCode (code: String): String = {
 
@@ -83,7 +88,7 @@ object DataCleansing {
   }
 
 
-  def cleanNetworkColumn: UserDefinedFunction = {
+  def udfCleanNetworkColumn: UserDefinedFunction = {
     udf {(row: String) =>
       getMNCbyCode(row)
     }
@@ -115,9 +120,9 @@ object DataCleansing {
 
   def cleanInterestsColumn(src: DataFrame): DataFrame = {
     val df = src.where(col("interests").isNotNull)
-    val interestsCleaned = df.withColumn("interests", split($"interests", ",").cast("array<String>"))
+    val interestsWithoutLabel = df.withColumn("interests", split($"interests", ",").cast("array<String>"))
     val interests_clean_udf = udf(generalInterests _)
-    interestsCleaned.withColumn("interests", interests_clean_udf($"interests"))
+    val interestsCleaned = interestsWithoutLabel.withColumn("interests", interests_clean_udf($"interests"))
     createInterestsColumn(interestsCleaned)
   }
 
@@ -149,6 +154,29 @@ object DataCleansing {
     setInterests.foreach(x => {
       newSrc = newSrc.withColumn(x.toString, when(array_contains($"interests", x.toString), 1).otherwise(0))
     })
+    newSrc.drop("interests")
+  }
+
+  // ----------- Cleaning size functions ------------- //
+
+  def cleanSizeColumn(src: DataFrame): DataFrame = {
+    val sizes = src.select("size").distinct().rdd.map(r => r(0)).collect().toList
+    val newSrc = src.withColumn("size", udf_size(sizes.asInstanceOf[List[mutable.WrappedArray[Long]]])($"size"))
     newSrc
   }
+
+  def udf_size(sizes: List[mutable.WrappedArray[Long]]): UserDefinedFunction = {
+    udf((row: mutable.WrappedArray[Long]) => {
+      replaceSize(row, sizes)
+    })
+  }
+
+  def replaceSize(row: mutable.WrappedArray[Long], sizes: List[mutable.WrappedArray[Long]]): String = {
+    if (sizes.contains(row)) {
+      row(0) + "x" + row(1)
+    } else {
+      null
+    }
+  }
+
 }

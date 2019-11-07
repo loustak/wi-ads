@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 object Cleaner extends App {
 
   val dataPath = "data/"
-  val data = dataPath + "data-students.json"
+  val data = dataPath + "sample-1000.json"
 
   val context= SparkSession
     .builder
@@ -25,22 +25,26 @@ object Cleaner extends App {
   val selected_data = raw_data.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label")
 
 
+  println("dataset before cleaning:")
+  selected_data.show()
+
   // Cleaning OS column
   val dataWithOsCleaned = cleanOsColumn(selected_data)
-  println("dataset ::::::::")
-  dataWithOsCleaned.show()
 
   // Cleaning Timestamp column
   val dataWithTimestampCleaned = cleanTimestampColumn(dataWithOsCleaned)
-  dataWithTimestampCleaned.show()
 
   // Cleaning Network column
-  val datawithNetworkCleaned = dataWithTimestampCleaned.withColumn("network",cleanNetworkColumn(selected_data("network")))
-  tolowerCase(datawithNetworkCleaned,"network")
+  val datawithNetworkCleaned = cleanNetworkColumn(dataWithTimestampCleaned)
 
-  // Cleaning Interests
-  val dataWithInterestsCleaned = cleanInterestsColumn(dataWithTimestampCleaned)
-  dataWithInterestsCleaned.show()
+  // Cleaning Interests column
+  val dataWithInterestsCleaned = cleanInterestsColumn(datawithNetworkCleaned)
+
+  // Cleaning Size column
+  val dataWithSizeCleaned = cleanSizeColumn(dataWithInterestsCleaned)
+
+  println("dataset cleaned: ")
+  dataWithSizeCleaned.show()
 
   context.close()
 }
