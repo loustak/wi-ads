@@ -29,6 +29,7 @@ object Cleaner extends App {
   println("dataset before cleaning:")
   selected_data.show()
 
+  println("dataset after cleaning:")
   clean_data(selected_data).show()
 
   context.close()

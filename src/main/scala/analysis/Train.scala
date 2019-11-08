@@ -1,25 +1,18 @@
 package analysis
 
-import org.apache.spark.ml.feature._
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.ml.classification.{DecisionTreeClassifier, LogisticRegression}
+import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.sql.DataFrame
 
 object Train {
+
   def logisticReg(train: DataFrame): PipelineModel = {
 
-    val osIndexer = new StringIndexer().setInputCol("os").setOutputCol("osIndexer")
-    val networkIndexer = new StringIndexer().setInputCol("network").setOutputCol("networkIndexer")
-    val appOrSiteIndexer = new StringIndexer().setInputCol("appOrSite").setOutputCol("appOrSiteIndexer")
-    val labelIndexer = new StringIndexer().setInputCol("label").setOutputCol("labelIndexer")
-    val publisherIndexer = new StringIndexer().setInputCol("publisher").setOutputCol("publisherIndexer")
-    val cityIndexer = new StringIndexer().setInputCol("city").setOutputCol("cityIndexer")
-    val mediaIndexer = new StringIndexer().setInputCol("media").setOutputCol("mediaIndexer")
-    val sizeIndexer = new StringIndexer().setInputCol("size").setOutputCol("sizeIndexer")
-    val typeIndexer = new StringIndexer().setInputCol("type").setOutputCol("typeIndexer")
+    // Get ColumnIndexer
+    val arrayIndexer = indexerColumn(List("os", "network", "appOrSite", "label", "publisher", "city", "size", "type"))
 
-    val allColumns = Array("osIndexer","networkIndexer","appOrSiteIndexer","labelIndexer","publisherIndexer","cityIndexer","mediaIndexer","sizeIndexer","typeIndexer")
+    val allColumns = arrayIndexer.map(_.getOutputCol)
 
     val assembler = new VectorAssembler()
       .setInputCols(allColumns)
@@ -38,7 +31,7 @@ object Train {
     val logisticRegression = new LogisticRegression().setMaxIter(10).setRegParam(0.3).setElasticNetParam(0.8).setLabelCol("binaryLabel").setFeaturesCol("features")
 
     //Chain indexers and tree in a Pipeline
-    val lrPipeline = new Pipeline().setStages(Array(osIndexer,networkIndexer,appOrSiteIndexer,labelIndexer,publisherIndexer,cityIndexer,mediaIndexer,sizeIndexer,typeIndexer,assembler,slicer,scaler,logisticRegression))
+    val lrPipeline = new Pipeline().setStages(arrayIndexer ++ Array(assembler, slicer, scaler, logisticRegression))
 
     // Train model
     val lrModel = lrPipeline.fit(train)
@@ -48,17 +41,10 @@ object Train {
 
   def decisionTree(train: DataFrame): PipelineModel = {
 
-    val osIndexer = new StringIndexer().setInputCol("os").setOutputCol("osIndexer")
-    val networkIndexer = new StringIndexer().setInputCol("network").setOutputCol("networkIndexer")
-    val appOrSiteIndexer = new StringIndexer().setInputCol("appOrSite").setOutputCol("appOrSiteIndexer")
-    val labelIndexer = new StringIndexer().setInputCol("label").setOutputCol("labelIndexer")
-    val publisherIndexer = new StringIndexer().setInputCol("publisher").setOutputCol("publisherIndexer")
-    val cityIndexer = new StringIndexer().setInputCol("city").setOutputCol("cityIndexer")
-    val mediaIndexer = new StringIndexer().setInputCol("media").setOutputCol("mediaIndexer")
-    val sizeIndexer = new StringIndexer().setInputCol("size").setOutputCol("sizeIndexer")
-    val typeIndexer = new StringIndexer().setInputCol("type").setOutputCol("typeIndexer")
+    // Get ColumnIndexer
+    val arrayIndexer = indexerColumn(List("os", "network", "appOrSite", "label", "publisher", "city", "size", "type"))
 
-    val allColumns = Array("osIndexer","networkIndexer","appOrSiteIndexer","labelIndexer","publisherIndexer","cityIndexer","mediaIndexer","sizeIndexer","typeIndexer")
+    val allColumns = arrayIndexer.map(_.getOutputCol)
 
     val assembler = new VectorAssembler()
       .setInputCols(allColumns)
@@ -73,13 +59,21 @@ object Train {
 
     // Train a DecisionTree model.
     val dt = new DecisionTreeClassifier().setLabelCol("label").setFeaturesCol("features")
+
     // Chain all into a Pipeline
-    val dtPipeline = new Pipeline().setStages(Array(osIndexer, networkIndexer, appOrSiteIndexer,labelIndexer,publisherIndexer,cityIndexer,mediaIndexer,sizeIndexer,typeIndexer, assembler, indexer, pca, bucketizer, dt))
+    val dtPipeline = new Pipeline().setStages(arrayIndexer ++ Array(assembler, indexer, pca, bucketizer, dt))
+
     // Train model.
     val dtModel = dtPipeline.fit(train)
 
     dtModel
   }
 
+  def indexerColumn(listNameColumn: List[String]): Array[StringIndexer] = {
+    val listIndexer = listNameColumn.map(x => {
+      new StringIndexer().setInputCol(x).setOutputCol(x + "Indexer")
+    })
 
+    listIndexer.toArray
+  }
 }
