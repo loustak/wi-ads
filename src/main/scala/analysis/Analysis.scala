@@ -2,25 +2,34 @@ package analysis
 
 import analysis.Train._
 import clean.DataCleansing._
+import org.apache.parquet.format.IntType
 import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MulticlassMetrics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
+
+
 
 object Analysis {
   def analyse(src: DataFrame): Unit = {
 
     val splits = src.randomSplit(Array(0.8,0.2),seed = 11L )
-    val train = putWeightsOnColumn(splits(0).cache())
-    val test = splits(1).cache().drop("label")
+    val trainDF = putWeightsOnColumn(splits(0).cache())
 
-    train.show()
-    test.show()
 
-    val model = logisticReg(train)
+
+    val testDF = splits(1).cache()
+
+
+    val cleanTestDF = addLabelColumn(testDF)
+
+    trainDF.show()
+    cleanTestDF.show()
+
+    val model = logisticReg(trainDF)
 
 
     // Make predictions
-    val lrPredictions = model.transform(test)
+    val lrPredictions = model.transform(cleanTestDF)
 
     lrPredictions.select("prediction","binaryLabel","features").show(1000)
 
@@ -52,6 +61,7 @@ object Analysis {
 
     //Area under ROC
     println(s"Area under ROC = ${metrics.areaUnderROC()}")
+
 
     //Area under percision-recall curve
     val auPRC = metrics.areaUnderPR

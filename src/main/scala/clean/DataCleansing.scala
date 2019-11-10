@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.udf
 
 import scala.collection.mutable
 
@@ -199,9 +200,16 @@ object DataCleansing {
   }
 
   def putWeightsOnColumn(src: DataFrame): DataFrame = {
-    val ratio = 0.97;
+    val ratio = 0.97
     src.withColumn("weights", when(src.col("label").contains(1), ratio).otherwise(1 - ratio))
   }
+
+  def addLabelColumn(src: DataFrame): DataFrame = {
+    val getNullInt = udf(() => None: Option[Int])
+    if(!src.columns.contains("label")) src.withColumn("label", getNullInt())
+    else src
+  }
+
 
   // Apply all the cleaning functions
   def clean_data(src: DataFrame): DataFrame = {
