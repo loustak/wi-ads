@@ -10,11 +10,14 @@ object Train {
   def logisticReg(train: DataFrame): PipelineModel = {
 
     // Get ColumnIndexer
-    val arrayIndexer = indexerColumn(train.columns.toList)
+    val arrayIndexer = indexerColumn(train.columns.toList.filter(x => x != "weights"))
     val allColumns = arrayIndexer.map(_.getOutputCol)
 
+    println("arrayIndexer: " + arrayIndexer.toList)
+    println("allcol: " + allColumns.toList)
+
     val assembler = new VectorAssembler()
-      .setInputCols(allColumns)
+      .setInputCols(allColumns.filter(x => x != "labelIndexer"))
       .setOutputCol("rawFeatures")
 
     //vector slicer
@@ -27,7 +30,7 @@ object Train {
     val binarizerClassifier = new Binarizer().setInputCol("labelIndexer").setOutputCol("binaryLabel")
 
     //logistic regression
-    val logisticRegression = new LogisticRegression().setMaxIter(10).setRegParam(0.3).setElasticNetParam(0.8).setLabelCol("binaryLabel").setFeaturesCol("features")
+    val logisticRegression = new LogisticRegression().setWeightCol("weights").setMaxIter(10).setRegParam(0.3).setElasticNetParam(0.8).setLabelCol("binaryLabel").setFeaturesCol("features")
 
     //Chain indexers and tree in a Pipeline
     val lrPipeline = new Pipeline().setStages(arrayIndexer ++ Array(assembler, slicer, scaler,binarizerClassifier, logisticRegression))

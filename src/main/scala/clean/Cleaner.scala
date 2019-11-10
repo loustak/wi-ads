@@ -1,13 +1,13 @@
 package clean
 
+import analysis.Analysis
 import clean.DataCleansing._
-import analysis.{Analysis}
 import org.apache.spark.sql.SparkSession
 
 object Cleaner extends App {
 
   val dataPath = "data/"
-  val data = dataPath + "data-students.json"
+  val data = dataPath + "sample-1000.json"
 
   val context= SparkSession
     .builder
@@ -28,10 +28,10 @@ object Cleaner extends App {
 
 
   println("dataset before cleaning:")
-  selected_data.show()
+  //selected_data.show()
 
   println("dataset after cleaning:")
-  cleanDF.show()
+  //cleanDF.show()
 
 
 

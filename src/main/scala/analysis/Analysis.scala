@@ -1,6 +1,7 @@
 package analysis
 
 import analysis.Train._
+import clean.DataCleansing._
 import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MulticlassMetrics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
@@ -9,8 +10,12 @@ object Analysis {
   def analyse(src: DataFrame): Unit = {
 
     val splits = src.randomSplit(Array(0.8,0.2),seed = 11L )
-    val train = splits(0).cache()
-    val test = splits(1).cache()
+    val train = putWeightsOnColumn(splits(0).cache())
+    val test = splits(1).cache().drop("label")
+
+    train.show()
+    test.show()
+
     val model = logisticReg(train)
 
 
