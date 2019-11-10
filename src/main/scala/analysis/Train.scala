@@ -21,7 +21,7 @@ object Train {
       .setOutputCol("rawFeatures")
 
     //vector slicer
-    val slicer = new VectorSlicer().setInputCol("rawFeatures").setOutputCol("slicedFeatures").setNames(allColumns)
+    val slicer = new VectorSlicer().setInputCol("rawFeatures").setOutputCol("slicedFeatures").setNames(allColumns.filter(x => x != "labelIndexer"))
 
     //scale the features
     val scaler = new StandardScaler().setInputCol("slicedFeatures").setOutputCol("features").setWithStd(true).setWithMean(true)
