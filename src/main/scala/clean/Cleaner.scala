@@ -1,6 +1,7 @@
 package clean
 
 import clean.DataCleansing._
+import analysis.{Analysis}
 import org.apache.spark.sql.SparkSession
 
 object Cleaner extends App {
@@ -11,7 +12,7 @@ object Cleaner extends App {
   val context= SparkSession
     .builder
     .appName("the Illusionists")
-    .master("local[*]")
+    .master("local[4]")
     .getOrCreate()
 
   context.sparkContext.setLogLevel("WARN")
@@ -23,14 +24,19 @@ object Cleaner extends App {
 
   //Keep only columns that we need for ML
   val selected_data = raw_data.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label")
-
+  val cleanDF = clean_data(selected_data)
 
 
   println("dataset before cleaning:")
   selected_data.show()
 
   println("dataset after cleaning:")
-  clean_data(selected_data).show()
+  cleanDF.show()
+
+
+
+
+  Analysis.analyse(cleanDF)
 
   context.close()
 }

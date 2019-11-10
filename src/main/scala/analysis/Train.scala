@@ -10,8 +10,7 @@ object Train {
   def logisticReg(train: DataFrame): PipelineModel = {
 
     // Get ColumnIndexer
-    val arrayIndexer = indexerColumn(List("os", "network", "appOrSite", "label", "publisher", "city", "size", "type"))
-
+    val arrayIndexer = indexerColumn(train.columns.toList)
     val allColumns = arrayIndexer.map(_.getOutputCol)
 
     val assembler = new VectorAssembler()
@@ -25,14 +24,13 @@ object Train {
     val scaler = new StandardScaler().setInputCol("slicedFeatures").setOutputCol("features").setWithStd(true).setWithMean(true)
 
     //label for binaryClassifier
-    //val binarizerClassifier = new Binarizer().setInputCol("label").setOutputCol("binaryLabel")
+    val binarizerClassifier = new Binarizer().setInputCol("labelIndexer").setOutputCol("binaryLabel")
 
     //logistic regression
     val logisticRegression = new LogisticRegression().setMaxIter(10).setRegParam(0.3).setElasticNetParam(0.8).setLabelCol("binaryLabel").setFeaturesCol("features")
 
     //Chain indexers and tree in a Pipeline
-    val lrPipeline = new Pipeline().setStages(arrayIndexer ++ Array(assembler, slicer, scaler, logisticRegression))
-
+    val lrPipeline = new Pipeline().setStages(arrayIndexer ++ Array(assembler, slicer, scaler,binarizerClassifier, logisticRegression))
     // Train model
     val lrModel = lrPipeline.fit(train)
 
@@ -42,7 +40,7 @@ object Train {
   def decisionTree(train: DataFrame): PipelineModel = {
 
     // Get ColumnIndexer
-    val arrayIndexer = indexerColumn(List("os", "network", "appOrSite", "label", "publisher", "city", "size", "type"))
+    val arrayIndexer = indexerColumn(train.columns.toList)
 
     val allColumns = arrayIndexer.map(_.getOutputCol)
 
@@ -55,7 +53,7 @@ object Train {
     //PCA
     val pca = new PCA().setInputCol("rawFeaturesIndexed").setOutputCol("features").setK(10)
     //label for multi class classifier
-    //val bucketizer = new Bucketizer().setInputCol("label").setOutputCol("multiClassLabel").setSplits(Array(Double.NegativeInfinity, 0.0, 15.0, Double.PositiveInfinity))
+    val bucketizer = new Bucketizer().setInputCol("label").setOutputCol("multiClassLabel").setSplits(Array(Double.NegativeInfinity, 0.0, 15.0, Double.PositiveInfinity))
 
     // Train a DecisionTree model.
     val dt = new DecisionTreeClassifier().setLabelCol("label").setFeaturesCol("features")
@@ -71,9 +69,12 @@ object Train {
 
   def indexerColumn(listNameColumn: List[String]): Array[StringIndexer] = {
     val listIndexer = listNameColumn.map(x => {
-      new StringIndexer().setInputCol(x).setOutputCol(x + "Indexer")
+      new StringIndexer().setInputCol(x).setOutputCol(x + "Indexer").setHandleInvalid("keep")
     })
-
     listIndexer.toArray
   }
+
+
+
+
 }

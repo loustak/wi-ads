@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.types.{StructField, StructType}
 
 import scala.collection.mutable
 
@@ -179,6 +180,25 @@ object DataCleansing {
     }
   }
 
+  // ----------- Cleaning BidFloor functions ------------- //
+  def cleanBidFloorColumn(src: DataFrame): DataFrame = {
+    val avgBidFloor = src.select(mean("bidfloor")).first()(0).asInstanceOf[Double]
+    println("avgbidfloor: " + avgBidFloor)
+    val newSrc = src.withColumn("bidfloor",
+      when(src.col("bidfloor").isNull,avgBidFloor)
+        .otherwise(src.col("bidfloor"))
+    )
+    newSrc
+  }
+
+  def labelColumnToInt(src: DataFrame): DataFrame = {
+    val newSrc = src.withColumn("label",
+      when(src.col("label").isNull,0)
+        .when(src.col("label")=== true,1)
+        .otherwise(0))
+    newSrc
+  }
+
   // Apply all the cleaning functions
   def clean_data(src: DataFrame): DataFrame = {
     // Cleaning OS column
@@ -188,13 +208,18 @@ object DataCleansing {
     val dataWithTimestampCleaned = cleanTimestampColumn(dataWithOsCleaned)
 
     // Cleaning Network column
-    val datawithNetworkCleaned = cleanNetworkColumn(dataWithTimestampCleaned)
+    val dataWithNetworkCleaned = cleanNetworkColumn(dataWithTimestampCleaned)
 
     // Cleaning Interests column
-    val dataWithInterestsCleaned = cleanInterestsColumn(datawithNetworkCleaned)
+    val dataWithInterestsCleaned = cleanInterestsColumn(dataWithNetworkCleaned)
+
+    // Cleaning BidFloorColumn
+    val dataWithBidFloorCleaned = cleanBidFloorColumn(dataWithInterestsCleaned)
+
+    val dataWithLabelCleaned = labelColumnToInt(dataWithBidFloorCleaned)
 
     // Cleaning Size column
-    cleanSizeColumn(dataWithInterestsCleaned)
+    cleanSizeColumn(dataWithLabelCleaned)
   }
 
 }
