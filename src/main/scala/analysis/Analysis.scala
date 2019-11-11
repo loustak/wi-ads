@@ -9,14 +9,14 @@ import org.apache.spark.sql.DataFrame
 object Analysis {
   def analyse(src: DataFrame): Unit = {
 
-    val splits = src.randomSplit(Array(0.8,0.2),seed = 11L )
-    val trainDF = putWeightsOnColumn(splits(0).cache())
+    val splits = src.randomSplit(Array(0.8, 0.2), seed = 11L)
+    val trainDF = putWeightsOnColumn(src)
     val testDF = splits(1).cache()
 
     val cleanTestDF = addLabelColumn(testDF)
 
     val model = logiscticTest(trainDF)
-
+    //val model = naiveBayesClassifier(trainDF)
 
     // Make predictions
     val lrPredictions = model.transform(cleanTestDF)
@@ -30,8 +30,6 @@ object Analysis {
     printBinaryMetrics(predictionAndLabels)
     printConfusionMatrix(predictionAndLabels)
 
-    model.write.overwrite().save("models/LR")
-    println("[TheIllusionists] Model saved in the models folder !")
   }
 
   def printConfusionMatrix(predictionAndLabels: RDD[(Double, Double)]): Unit = {

@@ -4,7 +4,6 @@
 *.class
 *.log
 dist/*
-.idea
 project/boot/
 project/plugins/project/
 .history

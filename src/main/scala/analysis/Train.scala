@@ -16,7 +16,6 @@ object Train {
     val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label")
     val cleanedData = cleanData(selectedData, sparkSession)
     analyse(cleanedData)
-
   }
 
 }
