@@ -1,6 +1,6 @@
 import java.io.File
 
-import analysis.Prediction._
+import analysis.Train
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 
@@ -18,14 +18,14 @@ object Main extends App {
 
     Console.println("[TheIllusionists] Application for prediction on RTB data.")
 
-    if (args.length == 0)
-      Console.println("[TheIllusionists] You should give the path to the json data file.")
-    else {
-      if (new File(args(0)).exists() && new File(args(0)).isFile && args(0).endsWith(".json"))
-        prediction(spark, args(0))
-      else
-        Console.println("[TheIllusionists] The file is not valid !")
-    }
+    //if (args.length == 0)
+    //  Console.println("[TheIllusionists] You should give the path to the json data file.")
+    //else {
+    //  if (new File(args(0)).exists() && new File(args(0)).isFile && args(0).endsWith(".json"))
+        Train.trainModel(spark, "data/sample-1000.json")
+    //  else
+    //    Console.println("[TheIllusionists] The file is not valid !")
+    //}
 
     spark.close()
   }
