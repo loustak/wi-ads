@@ -1,0 +1,1 @@
+{"class":"org.apache.spark.ml.feature.StringIndexerModel","timestamp":1573507562413,"sparkVersion":"2.4.4","uid":"strIdx_db1971686fe6","paramMap":{"inputCol":"IAB8-9","outputCol":"IAB8-9Indexer","handleInvalid":"keep"},"defaultParamMap":{"outputCol":"strIdx_db1971686fe6__output","handleInvalid":"error","stringOrderType":"frequencyDesc"}}

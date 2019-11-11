@@ -1,11 +1,36 @@
 package analysis
 
-import org.apache.spark.ml.classification.{DecisionTreeClassifier, LogisticRegression}
+import org.apache.spark.ml.classification.{DecisionTreeClassifier, LogisticRegression, NaiveBayes}
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.DataFrame
 
 object Models {
+
+  def naiveBayesClassifier(train1: DataFrame): PipelineModel = {
+    val train = train1.na.replace("network", Map("" -> "NA"))
+
+    // Get ColumnIndexer
+    val arrayIndexer = indexerColumn(train.columns.toList.filter(x => x != "weights").filter(x => x != "label"))
+    val allColumns = arrayIndexer.map(_.getOutputCol)
+
+    val labelIndexer = new StringIndexer().setInputCol("label").setOutputCol("labelIndexer")
+
+    val assembler = new VectorAssembler().setInputCols(allColumns).setOutputCol("features")
+
+    val naive = new NaiveBayes().setSmoothing(1.0).setModelType("multinomial").setLabelCol("label").setFeaturesCol("features").setWeightCol("weights")
+
+    val pipeline = new Pipeline().setStages(arrayIndexer ++ Array(labelIndexer, assembler, naive))
+
+    val pipelineModel = pipeline.fit(train)
+
+
+    pipelineModel.write.overwrite().save("models/NBC")
+    println("[TheIllusionists] Model saved in the models/NBC folder !")
+
+    pipelineModel
+
+  }
 
   def logiscticTest(train1: DataFrame): PipelineModel = {
     val train = train1.na.replace("network", Map("" -> "NA"))
@@ -27,12 +52,17 @@ object Models {
         .setLabelCol("label")
         .setMaxIter(1000)
         .setWeightCol("weights")
-        // .setRegParam(0.8)
-        //.setElasticNetParam(0.8)
+        //.setAggregationDepth(10)
+        .setThreshold(0.4925)
+        .setRegParam(0.0275)
+        //.setElasticNetParam(2)
 
     val pipeline = new Pipeline().setStages(arrayIndexer ++ arrayEncoder ++ Array(labelIndexer, assembler, logisticR))
 
     val pipelineModel = pipeline.fit(train)
+
+    pipelineModel.write.overwrite().save("models/LR")
+    println("[TheIllusionists] Model saved in the models/LR folder !")
 
     pipelineModel
   }

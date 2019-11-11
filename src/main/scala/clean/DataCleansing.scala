@@ -28,8 +28,8 @@ object DataCleansing {
 
   // Add a new category "other" for values where occurrence is less than the limit treshold
   def mainLabelsVSother(src: DataFrame, columnName: String) : DataFrame = {
-    val treshold = 100000
-    //val treshold = 100
+    //val treshold = 100000
+    val treshold = 100
 
     val counts = src.groupBy(columnName).count()
     val joined = src.join(counts, Seq(columnName))
@@ -109,7 +109,7 @@ object DataCleansing {
 
   def cleanInterestsColumn(src: DataFrame, sparkSession: SparkSession): DataFrame = {
     import sparkSession.implicits._
-    val df = src.where(col("interests").isNotNull)
+    val df = src.withColumn("interests", when(isnull($"interests"), "").otherwise($"interests"))
     val interestsWithoutLabel = df.withColumn("interests", split($"interests", ",").cast("array<String>"))
     val interests_clean_udf = udf(generalInterests _)
     val interestsCleaned = interestsWithoutLabel.withColumn("interests", interests_clean_udf($"interests"))
@@ -195,7 +195,7 @@ object DataCleansing {
   }
 
   def putWeightsOnColumn(src: DataFrame): DataFrame = {
-    val ratio = 0.97
+    val ratio = 0.975
     src.withColumn("weights", when(src.col("label").contains(1), ratio).otherwise(1 - ratio))
   }
 

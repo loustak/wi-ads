@@ -13,4 +13,5 @@ project/plugins/project/
 target
 rdd
 data/data-students.json
+data/data.json
 **/.idea/workspace.xml **/.idea/tasks.xml

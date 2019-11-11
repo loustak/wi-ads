@@ -21,7 +21,6 @@ object Train {
     println("NUMBER OF LINES AFTER CLEAN: " + cleanedData.count())
 
     analyse(cleanedData)
-
   }
 
 }
