@@ -27,7 +27,7 @@ object Analysis {
       (row.get(0).asInstanceOf[Double], row.get(1).asInstanceOf[Int].toDouble)
     }
 
-    printBinaryMetrics(predictionAndLabels)
+    // printBinaryMetrics(predictionAndLabels)
     printConfusionMatrix(predictionAndLabels)
 
     model.write.overwrite().save("models/LR")
@@ -36,14 +36,15 @@ object Analysis {
 
   def printConfusionMatrix(predictionAndLabels: RDD[(Double, Double)]): Unit = {
     val metrics = new MulticlassMetrics(predictionAndLabels)
-    println(s"ConfusionMatrix:\n ${metrics.confusionMatrix.toString()}")
-    println(s"Precision: ${metrics.precision}")
+
+    println(s"ConfusionMatrix:\n${metrics.confusionMatrix.toString()}")
+    println(s"Precision: ${metrics.accuracy}")
     println(s"weighted Precision: ${metrics.weightedPrecision}")
-    println(s"Recall: ${metrics.recall}")
+    println(s"Recall: ${metrics.recall(1.0)}")
     println(s"weighted Recall: ${metrics.weightedRecall}")
-    println(s"FMeasure: ${metrics.fMeasure}")
+    println(s"FMeasure: ${metrics.weightedFMeasure(0.5)}")
     println(s"weighted FMeasure: ${metrics.weightedFMeasure}")
-    println(s"${metrics.truePositiveRate(metrics.labels(0))}")
+    println(s"True positive rate: ${metrics.truePositiveRate(1.0)}")
   }
 
   def printBinaryMetrics(predictionAndLabels: RDD[(Double,Double)]): Unit = {

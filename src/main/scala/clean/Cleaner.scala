@@ -5,6 +5,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object Cleaner {
     def cleanData(data: DataFrame, sparkSession: SparkSession): DataFrame = {
+        /*
         println("av os: " + data.count())
 
         // Cleaning OS column
@@ -19,12 +20,13 @@ object Cleaner {
 
         // Cleaning Network column
         val dataWithNetworkCleaned = cleanNetworkColumn(dataWithTimestampCleaned)
-
-        println("av interests: " + dataWithNetworkCleaned.count())
+        */
+        println("av interests: " + data.count())
 
         // Cleaning Interests column
-        val dataWithInterestsCleaned = cleanInterestsColumn(dataWithNetworkCleaned, sparkSession)
+        val dataWithInterestsCleaned = cleanInterestsColumn(data, sparkSession)
 
+        /*
         println("av BidFloorColumn: " + dataWithInterestsCleaned.count())
 
         // Cleaning BidFloorColumn
@@ -35,7 +37,9 @@ object Cleaner {
 
         println("av dataWithLabelCleaned: " + dataWithBidFloorCleaned.count())
 
-        val dataWithLabelCleaned = labelColumnToInt(dataWithBidFloorCleaned)
+         */
+
+        val dataWithLabelCleaned = labelColumnToInt(dataWithInterestsCleaned)
 
         cleanSizeColumn(dataWithLabelCleaned, sparkSession)
     }

@@ -22,7 +22,13 @@ object Models {
 
     val assembler = new VectorAssembler().setInputCols(allColumnsEncoder).setOutputCol("features")
 
-    val logisticR = new LogisticRegression().setFeaturesCol("features").setLabelCol("label").setMaxIter(10).setWeightCol("weights")
+    val logisticR = new LogisticRegression()
+        .setFeaturesCol("features")
+        .setLabelCol("label")
+        .setMaxIter(1000)
+        .setWeightCol("weights")
+        // .setRegParam(0.8)
+        //.setElasticNetParam(0.8)
 
     val pipeline = new Pipeline().setStages(arrayIndexer ++ arrayEncoder ++ Array(labelIndexer, assembler, logisticR))
 
@@ -58,7 +64,13 @@ object Models {
     val binarizerClassifier = new Binarizer().setInputCol("labelIndexer").setOutputCol("binaryLabel")
 
     //logistic regression
-    val logisticRegression = new LogisticRegression().setWeightCol("weights").setMaxIter(10).setRegParam(0.8).setElasticNetParam(0.4).setLabelCol("binaryLabel").setFeaturesCol("features")
+    val logisticRegression = new LogisticRegression()
+        .setWeightCol("weights")
+        .setMaxIter(10)
+        .setRegParam(0.3)
+        .setElasticNetParam(0.8)
+        .setLabelCol("binaryLabel")
+        .setFeaturesCol("features")
 
     //Chain indexers and tree in a Pipeline
     val lrPipeline = new Pipeline().setStages(arrayIndexer ++ Array(assembler, slicer, scaler, binarizerClassifier, logisticRegression))
