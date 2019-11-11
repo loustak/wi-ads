@@ -1,1 +1,0 @@
-{"class":"org.apache.spark.ml.feature.OneHotEncoderModel","timestamp":1573507571493,"sparkVersion":"2.4.4","uid":"oneHotEncoder_b43acbd210e3","paramMap":{"inputCols":["IAB17-15Indexer"],"handleInvalid":"keep","outputCols":["IAB17-15IndexerVC"]},"defaultParamMap":{"dropLast":true,"handleInvalid":"error"}}

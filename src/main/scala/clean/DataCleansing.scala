@@ -198,8 +198,8 @@ object DataCleansing {
 
     val mostOccuringValue = getMostOccuringValue(src,"type")
     val newSrc = src.withColumn("type",
-      when(src.col("network").isNull,mostOccuringValue)
-        .when(src.col("network") === "CLICK",mostOccuringValue)
+      when(src.col("type").isNull,mostOccuringValue)
+        .when(src.col("type") === "CLICK",mostOccuringValue)
         .otherwise(src.col("type")))
 
     println(mostOccuringValue)
@@ -227,7 +227,7 @@ object DataCleansing {
   }
 
   def putWeightsOnColumn(src: DataFrame): DataFrame = {
-    val ratio = 0.975
+    val ratio = 0.9885
     src.withColumn("weights", when(src.col("label").contains(1), ratio).otherwise(1 - ratio))
   }
 

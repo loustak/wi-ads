@@ -52,7 +52,7 @@ object Models {
         .setMaxIter(1000)
         .setWeightCol("weights")
         //.setAggregationDepth(10)
-        .setThreshold(0.4925)
+        .setThreshold(0.4955)
         .setRegParam(0.0275)
         //.setElasticNetParam(2)
 
@@ -95,9 +95,9 @@ object Models {
     //logistic regression
     val logisticRegression = new LogisticRegression()
         .setWeightCol("weights")
-        .setMaxIter(10)
+        .setMaxIter(1000)
         .setRegParam(0.3)
-        .setElasticNetParam(0.8)
+        //.setElasticNetParam(0.8)
         .setLabelCol("binaryLabel")
         .setFeaturesCol("features")
 

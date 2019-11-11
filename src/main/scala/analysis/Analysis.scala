@@ -10,7 +10,7 @@ object Analysis {
   def analyse(src: DataFrame): Unit = {
 
     val splits = src.randomSplit(Array(0.8, 0.2), seed = 11L)
-    val trainDF = putWeightsOnColumn(src)
+    val trainDF = putWeightsOnColumn(splits(0).cache())
     val testDF = splits(1).cache()
 
     val cleanTestDF = addLabelColumn(testDF)
