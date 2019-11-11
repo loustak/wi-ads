@@ -1,0 +1,1 @@
+{"class":"org.apache.spark.ml.feature.StringIndexerModel","timestamp":1573476736759,"sparkVersion":"2.4.4","uid":"strIdx_3b25266132fb","paramMap":{"inputCol":"bidfloor","handleInvalid":"keep","outputCol":"bidfloorIndexer"},"defaultParamMap":{"handleInvalid":"error","stringOrderType":"frequencyDesc","outputCol":"strIdx_3b25266132fb__output"}}

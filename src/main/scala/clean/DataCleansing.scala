@@ -3,27 +3,14 @@ package clean
 import java.text.SimpleDateFormat
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{udf, _}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.udf
 
 import scala.collection.mutable
 
 
 
 object DataCleansing {
-
-  val spark: SparkSession = SparkSession.builder()
-    // Sets the Spark master URL to connect to, such as "local" to run locally, "local[4]"
-    // to run locally with 4 cores, or "spark://master:7077" to run on a Spark standalone cluster.
-    .master("local[4]")
-    // Sets a name for the application, which will be shown in the Spark web UI.
-    .appName("ADS click prediction") // The app name in the web UI
-    .getOrCreate()
-
-  import spark.implicits._ // To use the "$" keyword
-
-
 
   // ----------- Cleaning os functions ------------- //
 
@@ -41,8 +28,8 @@ object DataCleansing {
 
   // Add a new category "other" for values where occurrence is less than the limit treshold
   def mainLabelsVSother(src: DataFrame, columnName: String) : DataFrame = {
-
     val treshold = 100000
+    //val treshold = 100
 
     val counts = src.groupBy(columnName).count()
     val joined = src.join(counts, Seq(columnName))
@@ -98,7 +85,8 @@ object DataCleansing {
 
   // ----------- Cleaning timestamp functions ------------- //
 
-  def cleanTimestampColumn(src: DataFrame): DataFrame = {
+  def cleanTimestampColumn(src: DataFrame, sparkSession: SparkSession): DataFrame = {
+    import sparkSession.implicits._
     // To apply a function to each value of a column
     val timestamp_clean_udf = udf(timeStampToDate _)
     src.withColumn("timestamp", timestamp_clean_udf($"timestamp"))
@@ -119,12 +107,13 @@ object DataCleansing {
 
   // ----------- Cleaning interests functions ------------- //
 
-  def cleanInterestsColumn(src: DataFrame): DataFrame = {
+  def cleanInterestsColumn(src: DataFrame, sparkSession: SparkSession): DataFrame = {
+    import sparkSession.implicits._
     val df = src.where(col("interests").isNotNull)
     val interestsWithoutLabel = df.withColumn("interests", split($"interests", ",").cast("array<String>"))
     val interests_clean_udf = udf(generalInterests _)
     val interestsCleaned = interestsWithoutLabel.withColumn("interests", interests_clean_udf($"interests"))
-    createInterestsColumn(interestsCleaned)
+    createInterestsColumn(interestsCleaned, sparkSession)
   }
 
   def generalInterests(array: mutable.WrappedArray[String]): Array[String] = {
@@ -143,7 +132,8 @@ object DataCleansing {
    * @param src
    * @return
    */
-  def createInterestsColumn(src: DataFrame): DataFrame = {
+  def createInterestsColumn(src: DataFrame, sparkSession: SparkSession): DataFrame = {
+    import sparkSession.implicits._
     val v = src.select("interests").rdd.map(r => r(0)).collect()
     var setInterests = Set[String]()
     var newSrc = src
@@ -160,7 +150,8 @@ object DataCleansing {
 
   // ----------- Cleaning size functions ------------- //
 
-  def cleanSizeColumn(src: DataFrame): DataFrame = {
+  def cleanSizeColumn(src: DataFrame, sparkSession: SparkSession): DataFrame = {
+    import sparkSession.implicits._
     val sizes = src.select("size").distinct().rdd.map(r => r(0)).collect().toList
     val newSrc = src.withColumn("size", udf_size(sizes.asInstanceOf[List[mutable.WrappedArray[Long]]])($"size"))
     newSrc
@@ -173,10 +164,14 @@ object DataCleansing {
   }
 
   def replaceSize(row: mutable.WrappedArray[Long], sizes: List[mutable.WrappedArray[Long]]): String = {
-    if (sizes.contains(row)) {
-      row(0) + "x" + row(1)
+    if (row != null) {
+      if (sizes.contains(row)) {
+        row(0) + "x" + row(1)
+      } else {
+        "null"
+      }
     } else {
-      null
+      "null"
     }
   }
 
@@ -193,8 +188,8 @@ object DataCleansing {
 
   def labelColumnToInt(src: DataFrame): DataFrame = {
     val newSrc = src.withColumn("label",
-      when(src.col("label").isNull,0)
-        .when(src.col("label")=== true,1)
+      when(src.col("label").isNull, 0)
+        .when(src.col("label") === true, 1)
         .otherwise(0))
     newSrc
   }
@@ -209,33 +204,4 @@ object DataCleansing {
     if(!src.columns.contains("label")) src.withColumn("label", getNullInt())
     else src
   }
-
-
-  // Apply all the cleaning functions
-  def clean_data(src: DataFrame): DataFrame = {
-    // Cleaning OS column
-    val dataWithOsCleaned = cleanOsColumn(src)
-
-    // Cleaning Timestamp column
-    val dataWithTimestampCleaned = cleanTimestampColumn(dataWithOsCleaned)
-
-    // Cleaning Network column
-    val dataWithNetworkCleaned = cleanNetworkColumn(dataWithTimestampCleaned)
-
-    // Cleaning Interests column
-    val dataWithInterestsCleaned = cleanInterestsColumn(dataWithNetworkCleaned)
-
-    // Cleaning BidFloorColumn
-    val dataWithBidFloorCleaned = cleanBidFloorColumn(dataWithInterestsCleaned)
-
-    val dataWithLabelCleaned = labelColumnToInt(dataWithBidFloorCleaned)
-
-    // Cleaning Size column
-    //val dataWithSizeCleaned = cleanSizeColumn(dataWithLabelCleaned)
-    cleanSizeColumn(dataWithLabelCleaned)
-
-    // Put weights for each row
-    // putWeightsOnColumn(dataWithSizeCleaned)
-  }
-
 }

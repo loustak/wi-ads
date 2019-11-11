@@ -1,44 +1,44 @@
 package clean
 
-import analysis.Analysis
 import clean.DataCleansing._
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
-object Cleaner extends App {
+object Cleaner {
+    def cleanData(data: DataFrame, sparkSession: SparkSession): DataFrame = {
+        println("av os: " + data.count())
 
-  val dataPath = "data/"
-  val data = dataPath + "sample-1000.json"
+        // Cleaning OS column
+        val dataWithOsCleaned = cleanOsColumn(data)
 
-  val context= SparkSession
-    .builder
-    .appName("the Illusionists")
-    .master("local[4]")
-    .getOrCreate()
+        println("av time: " + dataWithOsCleaned.count())
 
-  context.sparkContext.setLogLevel("WARN")
+        // Cleaning Timestamp column
+        val dataWithTimestampCleaned = cleanTimestampColumn(dataWithOsCleaned, sparkSession)
 
-  val raw_data =  context.read.format("json")
-    .option("header", "true")
-    .option("inferSchema", "true")
-    .load(data)
+        println("av network: " + dataWithTimestampCleaned.count())
 
-  //Keep only columns that we need for ML
-  val selected_data = raw_data.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label")
-  val cleanDF = clean_data(selected_data)
+        // Cleaning Network column
+        val dataWithNetworkCleaned = cleanNetworkColumn(dataWithTimestampCleaned)
 
+        println("av interests: " + dataWithNetworkCleaned.count())
 
-  println("dataset before cleaning:")
-  //selected_data.show()
+        // Cleaning Interests column
+        val dataWithInterestsCleaned = cleanInterestsColumn(dataWithNetworkCleaned, sparkSession)
 
-  println("dataset after cleaning:")
-  //cleanDF.show()
+        println("av BidFloorColumn: " + dataWithInterestsCleaned.count())
 
+        // Cleaning BidFloorColumn
+        var dataWithBidFloorCleaned = cleanBidFloorColumn(dataWithInterestsCleaned)
 
+        if (!data.columns.toList.contains("label"))
+            dataWithBidFloorCleaned = addLabelColumn(dataWithBidFloorCleaned)
 
+        println("av dataWithLabelCleaned: " + dataWithBidFloorCleaned.count())
 
-  Analysis.analyse(cleanDF)
+        val dataWithLabelCleaned = labelColumnToInt(dataWithBidFloorCleaned)
 
-  context.close()
+        cleanSizeColumn(dataWithLabelCleaned, sparkSession)
+    }
 }
 
 

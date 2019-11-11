@@ -1,48 +1,38 @@
 package analysis
 
-import analysis.Train._
+import analysis.Models._
 import clean.DataCleansing._
-import org.apache.parquet.format.IntType
 import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MulticlassMetrics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
-
-
 
 object Analysis {
   def analyse(src: DataFrame): Unit = {
 
     val splits = src.randomSplit(Array(0.8,0.2),seed = 11L )
     val trainDF = putWeightsOnColumn(splits(0).cache())
-
-
-
     val testDF = splits(1).cache()
-
 
     val cleanTestDF = addLabelColumn(testDF)
 
-    trainDF.show()
-    cleanTestDF.show()
-
-    val model = logisticReg(trainDF)
+    val model = logiscticTest(trainDF)
 
 
     // Make predictions
     val lrPredictions = model.transform(cleanTestDF)
 
-    lrPredictions.select("prediction","binaryLabel","features").show(1000)
-
-    val result = lrPredictions.select("prediction","binaryLabel")
+    val result = lrPredictions.select("prediction", "label")
 
     val predictionAndLabels = result.rdd.map { row =>
-      (row.get(0).asInstanceOf[Double],row.get(1).asInstanceOf[Double])
+      (row.get(0).asInstanceOf[Double], row.get(1).asInstanceOf[Int].toDouble)
     }
 
     printBinaryMetrics(predictionAndLabels)
     printConfusionMatrix(predictionAndLabels)
 
-    }
+    model.write.overwrite().save("models/LR")
+    println("[TheIllusionists] Model saved in the models folder !")
+  }
 
   def printConfusionMatrix(predictionAndLabels: RDD[(Double, Double)]): Unit = {
     val metrics = new MulticlassMetrics(predictionAndLabels)
@@ -91,15 +81,7 @@ object Analysis {
     val beta = 0.5
     val fScore = metrics.fMeasureByThreshold(beta)
     fScore.foreach { case (t, f) =>
-    println(s"Threshold: $t, F-score: $f, Beta = 0.5")
-  }
-
-
-    //Set the model threshold to maximize F-Measure
-    //val fMeasure = metrics.fMeasureByThreshold
-    //val maxFMeasure = fMeasure.select(max("F-Measure")).head().getDouble(0)
-    //val bestThreshold = fMeasure.where($"F-Measure" === maxFMeasure).
-    //  select("threshold").head().getDouble(0)
-    //model.setThreshold(bestThreshold)
+      println(s"Threshold: $t, F-score: $f, Beta = 0.5")
+    }
   }
 }
