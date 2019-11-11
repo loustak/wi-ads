@@ -13,7 +13,7 @@ object Train {
       .load(data)
 
     //Keep only columns that we need for ML
-    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label")
+    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label","type")
     val cleanedData = cleanData(selectedData, sparkSession)
     analyse(cleanedData)
   }

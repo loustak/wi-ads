@@ -49,11 +49,11 @@ object DataCleansing {
 
   def cleanNetworkColumn(src: DataFrame): DataFrame = {
 
-
+    src.groupBy("network").count().show
     val mostOccuringValue = getMostOccuringValue(src,"network")
-    println(mostOccuringValue)
     val newSrc = src.withColumn("network",
       when(src.col("network").isNull,mostOccuringValue)
+        .when(src.col("network") === "",mostOccuringValue)
         .otherwise(src.col("network")))
 
     val datawithNetworkCleaned = newSrc.withColumn("network", udfCleanNetworkColumn(newSrc("network")))
@@ -62,7 +62,7 @@ object DataCleansing {
   }
 
   def getMostOccuringValue(src: DataFrame, column: String): String = {
-    src.groupBy("network").count().orderBy(desc("count"))
+    src.groupBy(column).count().orderBy(desc("count"))
       .select(column).filter(x => x(0) != null)
       .first()(0)
       .toString
@@ -190,6 +190,21 @@ object DataCleansing {
     } else {
       "null"
     }
+  }
+
+  // ----------- Cleaning type functions ------------- //
+
+  def cleanTypeColumn(src: DataFrame): DataFrame = {
+
+    val mostOccuringValue = getMostOccuringValue(src,"type")
+    val newSrc = src.withColumn("type",
+      when(src.col("network").isNull,mostOccuringValue)
+        .when(src.col("network") === "CLICK",mostOccuringValue)
+        .otherwise(src.col("type")))
+
+    println(mostOccuringValue)
+    println(newSrc)
+    newSrc
   }
 
   // ----------- Cleaning BidFloor functions ------------- //
