@@ -1,6 +1,18 @@
+
+.cache
+.DS_Store 
+*.class
+*.log
+dist/*
+project/boot/
+project/plugins/project/
+.history
+.cache
+.lib
 .metals
 target
-project
 rdd
+data/data-students.json
+data/data.json
 data
 **/.idea/workspace.xml **/.idea/tasks.xml

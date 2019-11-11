@@ -1,25 +1,36 @@
 import java.io.File
+import analysis.Train
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.SparkSession
+import analysis.Train._
 
-import org.apache.spark.sql.{SQLContext, SparkSession}
+object Main extends App {
+  override def main(args: Array[String]): Unit = {
 
-object Main {
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    Logger.getLogger("akka").setLevel(Level.ERROR)
 
-    def main(args: Array[String]): Unit = {
+    val spark = SparkSession
+      .builder()
+      .master("local")
+      .appName("The Illusionists")
+      .getOrCreate()
 
-        val spark = SparkSession.builder()
-            // Sets the Spark master URL to connect to, such as "local" to run locally, "local[4]"
-            // to run locally with 4 cores, or "spark://master:7077" to run on a Spark standalone cluster.
-            .master("local[1]")
-            // Sets a name for the application, which will be shown in the Spark web UI.
-            .appName("ADS click prediction") // The app name in the web UI
-            .getOrCreate()
+    Console.println("[TheIllusionists] Application for prediction on RTB data.")
 
-        val sc = spark.sparkContext
-
-        val dataFrame = spark.read.json(Path.baseDataPath)
-        dataFrame.show(5)
-
-        sc.stop()
-        spark.stop()
+    /*
+    if (args.length == 0)
+      Console.println("[TheIllusionists] You should give the path to the json data file.")
+    else {
+      if (new File(args(0)).exists() && new File(args(0)).isFile && args(0).endsWith(".json"))
+        prediction(spark, args(0))
+      else
+        Console.println("[TheIllusionists] The file is not valid !")
     }
+     */
+
+    trainModel(spark, "data/sample-10000.json")
+    //prediction(spark, "data/sample-10000.json")
+    spark.close()
+  }
 }
