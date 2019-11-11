@@ -14,4 +14,5 @@ target
 rdd
 data/data-students.json
 data/data.json
+.idea/
 **/.idea/workspace.xml **/.idea/tasks.xml

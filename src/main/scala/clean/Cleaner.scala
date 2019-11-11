@@ -41,7 +41,11 @@ object Cleaner {
 
         val dataWithLabelCleaned = labelColumnToInt(dataWithInterestsCleaned)
 
-        cleanSizeColumn(dataWithLabelCleaned, sparkSession)
+        println("av dataWithTypeCleaned: " + dataWithLabelCleaned.count())
+        val dataWithTypeCleaned = cleanTypeColumn(dataWithLabelCleaned)
+
+        println("av dataWithSizeCleaned: " + dataWithLabelCleaned.count())
+        cleanSizeColumn(dataWithTypeCleaned, sparkSession)
     }
 }
 

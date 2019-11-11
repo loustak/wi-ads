@@ -19,7 +19,7 @@ object Prediction {
     import sparkSession.implicits._
 
     //Keep only columns that we need for ML
-    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "id", "label")
+    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "id", "label","type")
 
     val cleanedData = cleanData(selectedData, sparkSession)
 

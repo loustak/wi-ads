@@ -7,8 +7,7 @@ import org.apache.spark.sql.DataFrame
 
 object Models {
 
-  def naiveBayesClassifier(train1: DataFrame): PipelineModel = {
-    val train = train1.na.replace("network", Map("" -> "NA"))
+  def naiveBayesClassifier(train: DataFrame): PipelineModel = {
 
     // Get ColumnIndexer
     val arrayIndexer = indexerColumn(train.columns.toList.filter(x => x != "weights").filter(x => x != "label"))

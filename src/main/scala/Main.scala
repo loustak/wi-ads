@@ -1,6 +1,6 @@
 import java.io.File
 
-import analysis.Prediction._
+import analysis.Train
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import analysis.Train._
@@ -32,7 +32,6 @@ object Main extends App {
 
     trainModel(spark, "data/sample-10000.json")
     //prediction(spark, "data/sample-10000.json")
-
     spark.close()
   }
 }

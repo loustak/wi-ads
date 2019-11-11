@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.collection.mutable
 
-
+import org.apache.spark.sql.functions._
 
 object DataCleansing {
 
@@ -48,10 +48,27 @@ object DataCleansing {
   // ----------- Cleaning network functions ------------- //
 
   def cleanNetworkColumn(src: DataFrame): DataFrame = {
-    val df = src.where(col("network").isNotNull)
-    val datawithNetworkCleaned = df.withColumn("network", udfCleanNetworkColumn(src("network")))
-    tolowerCase(datawithNetworkCleaned, "network")
+
+    src.groupBy("network").count().show
+    val mostOccuringValue = getMostOccuringValue(src,"network")
+    val newSrc = src.withColumn("network",
+      when(src.col("network").isNull,mostOccuringValue)
+        .when(src.col("network") === "",mostOccuringValue)
+        .otherwise(src.col("network")))
+
+    val datawithNetworkCleaned = newSrc.withColumn("network", udfCleanNetworkColumn(newSrc("network")))
+    val newDF = tolowerCase(datawithNetworkCleaned, "network")
+    newDF
   }
+
+  def getMostOccuringValue(src: DataFrame, column: String): String = {
+    src.groupBy(column).count().orderBy(desc("count"))
+      .select(column).filter(x => x(0) != null)
+      .first()(0)
+      .toString
+  }
+
+
 
   def getMNCbyCode (code: String): String = {
 
@@ -59,8 +76,8 @@ object DataCleansing {
     val MCCFrance = "208-"
 
     // France main Mobile Network Code
-    val MNCFrance = Map("orange"->List("01","02","91","95"),
-      "sfr"->List("09","10","11","13"),
+    val MNCFrance = Map("orange"->List("1","01","2","02","91","95"),
+      "sfr"->List("9","09","10","11","13"),
       "bouygues"->List("20","21"),"free"->List("15","16"))
 
     if(code.startsWith(MCCFrance)) {
@@ -173,6 +190,21 @@ object DataCleansing {
     } else {
       "null"
     }
+  }
+
+  // ----------- Cleaning type functions ------------- //
+
+  def cleanTypeColumn(src: DataFrame): DataFrame = {
+
+    val mostOccuringValue = getMostOccuringValue(src,"type")
+    val newSrc = src.withColumn("type",
+      when(src.col("network").isNull,mostOccuringValue)
+        .when(src.col("network") === "CLICK",mostOccuringValue)
+        .otherwise(src.col("type")))
+
+    println(mostOccuringValue)
+    println(newSrc)
+    newSrc
   }
 
   // ----------- Cleaning BidFloor functions ------------- //
