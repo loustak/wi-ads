@@ -1,8 +1,8 @@
 import java.io.File
-import analysis.Train
+
+import analysis.Prediction._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
-import analysis.Train._
 
 object Main extends App {
   override def main(args: Array[String]): Unit = {
@@ -18,7 +18,6 @@ object Main extends App {
 
     Console.println("[TheIllusionists] Application for prediction on RTB data.")
 
-    /*
     if (args.length == 0)
       Console.println("[TheIllusionists] You should give the path to the json data file.")
     else {
@@ -27,10 +26,9 @@ object Main extends App {
       else
         Console.println("[TheIllusionists] The file is not valid !")
     }
-     */
 
-    trainModel(spark, "data/sample-10000.json")
-    //prediction(spark, "data/sample-10000.json")
+    //trainModel(spark, "data/sample-10000.json")
+    //prediction(spark, "data/sample-100.json")
     spark.close()
   }
 }

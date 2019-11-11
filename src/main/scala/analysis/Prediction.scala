@@ -13,17 +13,16 @@ object Prediction {
       .option("inferSchema", "true")
       .load(data)
       .withColumn("id", monotonically_increasing_id)
-      .drop("label")
       .drop("_corrupt_record")
 
     import sparkSession.implicits._
 
     //Keep only columns that we need for ML
-    val selectedData = rawData.select(/*"os", "network", "appOrSite", "timestamp",*/ "bidfloor", "size", "interests", "id", "label"/*, "type"*/)
+    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "id", "label", "type")
 
     val cleanedData = cleanData(selectedData, sparkSession)
 
-    val model = PipelineModel.load("models/NBC")
+    val model = PipelineModel.load("models/LR")
     val predictions = model
       .transform(cleanedData)
       .withColumn("label", when($"prediction" === 0.0, false).otherwise(true))
