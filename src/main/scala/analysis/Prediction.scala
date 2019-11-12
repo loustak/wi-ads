@@ -13,12 +13,13 @@ object Prediction {
       .option("inferSchema", "true")
       .load(data)
       .withColumn("id", monotonically_increasing_id)
+      .drop("label")
       .drop("_corrupt_record")
 
     import sparkSession.implicits._
 
     //Keep only columns that we need for ML
-    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "id", "label", "type")
+    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "id", "type")
 
     val cleanedData = cleanData(selectedData, sparkSession)
 
@@ -33,6 +34,8 @@ object Prediction {
     val dataSizeCleaned = cleanSizeColumn(rawData, sparkSession)
 
     val resultJoin = dataSizeCleaned.join(result, "id")
+
+    resultJoin.show()
 
     val reorderedColumnNames: Array[String] = Array("label") ++ rawData.columns
     val resultFinal: DataFrame = resultJoin.select(reorderedColumnNames.head, reorderedColumnNames.tail: _*).drop("id")
