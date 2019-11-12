@@ -9,23 +9,11 @@ libraryDependencies += "org.apache.spark" %% "spark-mllib" % "2.4.4"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.4"
 
 assemblyMergeStrategy in assembly := {
-  case PathList("META-INF", xs@_*) =>
-    xs map {
-      _.toLowerCase
-    } match {
-      case "manifest.mf" :: Nil | "index.list" :: Nil | "dependencies" :: Nil =>
-        MergeStrategy.discard
-      case ps@x :: xs if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
-        MergeStrategy.discard
-      case "plexus" :: xs =>
-        MergeStrategy.discard
-      case "services" :: xs =>
-        MergeStrategy.filterDistinctLines
-      case "spring.schemas" :: Nil | "spring.handlers" :: Nil =>
-        MergeStrategy.filterDistinctLines
-      case _ => MergeStrategy.first
-    }
-  case "application.conf" => MergeStrategy.concat
-  case "reference.conf" => MergeStrategy.concat
-  case _ => MergeStrategy.first
+  case PathList("javax", "servlet", xs @ _*) => MergeStrategy.first
+  case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
+  case n if n.contains("services") => MergeStrategy.concat
+  case n if n.startsWith("reference.conf") => MergeStrategy.concat
+  case n if n.endsWith(".conf") => MergeStrategy.concat
+  case PathList("META-INF", xs@_*) => MergeStrategy.discard
+  case x => MergeStrategy.first
 }
