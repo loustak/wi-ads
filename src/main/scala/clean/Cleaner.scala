@@ -34,7 +34,7 @@ object Cleaner {
 
         println("av dataWithLabelCleaned: " + dataWithBidFloorCleaned.count())
 
-        val dataWithLabelCleaned = labelColumnToInt(dataWithInterestsCleaned)
+        val dataWithLabelCleaned = labelColumnToInt(dataWithBidFloorCleaned)
 
         println("av dataWithTypeCleaned: " + dataWithLabelCleaned.count())
         val dataWithTypeCleaned = cleanTypeColumn(dataWithLabelCleaned)

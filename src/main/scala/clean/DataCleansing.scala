@@ -8,8 +8,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.collection.mutable
 
-import org.apache.spark.sql.functions._
-
 object DataCleansing {
 
   // ----------- Cleaning os functions ------------- //
@@ -201,16 +199,12 @@ object DataCleansing {
       when(src.col("type").isNull,mostOccuringValue)
         .when(src.col("type") === "CLICK",mostOccuringValue)
         .otherwise(src.col("type")))
-
-    println(mostOccuringValue)
-    println(newSrc)
     newSrc
   }
 
   // ----------- Cleaning BidFloor functions ------------- //
   def cleanBidFloorColumn(src: DataFrame): DataFrame = {
     val avgBidFloor = src.select(mean("bidfloor")).first()(0).asInstanceOf[Double]
-    println("avgbidfloor: " + avgBidFloor)
     val newSrc = src.withColumn("bidfloor",
       when(src.col("bidfloor").isNull,avgBidFloor)
         .otherwise(src.col("bidfloor"))
