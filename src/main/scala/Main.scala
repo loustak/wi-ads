@@ -14,6 +14,7 @@ object Main extends App {
       .builder()
       .master("local")
       .appName("The Illusionists")
+      .config("spark.some.config.option", "some-value")
       .getOrCreate()
 
     Console.println("[TheIllusionists] Application for prediction on RTB data.")
