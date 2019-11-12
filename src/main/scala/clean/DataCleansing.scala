@@ -46,8 +46,6 @@ object DataCleansing {
   // ----------- Cleaning network functions ------------- //
 
   def cleanNetworkColumn(src: DataFrame): DataFrame = {
-
-    src.groupBy("network").count().show
     val mostOccuringValue = getMostOccuringValue(src,"network")
     val newSrc = src.withColumn("network",
       when(src.col("network").isNull,mostOccuringValue)
@@ -81,8 +79,8 @@ object DataCleansing {
     if(code.startsWith(MCCFrance)) {
       val mnc = code.substring(4)
       val res = MNCFrance.map(m=> {
-      val contained = m._2.contains(mnc)
-      if (contained) m._1
+        val contained = m._2.contains(mnc)
+        if (contained) m._1
         else ""
       }).mkString("")
       res
@@ -160,7 +158,9 @@ object DataCleansing {
     setInterests.foreach(x => {
       newSrc = newSrc.withColumn(x.toString, when(array_contains($"interests", x.toString), 1).otherwise(0))
     })
-    newSrc.drop("interests")
+
+    val resultSrc = removeColumns(newSrc, newSrc.columns.filter(x => !allIAB.contains(x) && x.startsWith("IAB")))
+    addMissingIAB(resultSrc, allIAB.toArray)
   }
 
   // ----------- Cleaning size functions ------------- //
@@ -230,4 +230,24 @@ object DataCleansing {
     if(!src.columns.contains("label")) src.withColumn("label", getNullInt())
     else src
   }
+
+  def removeColumns(src: DataFrame, columns: Array[String]): DataFrame = {
+    var newSrc = src
+    for (c <- columns) {
+      newSrc = newSrc.drop(newSrc.col(c))
+    }
+    newSrc
+  }
+
+  def addMissingIAB(src: DataFrame, columns: Array[String]): DataFrame = {
+    columns.foldLeft(src)((dataframe, column) => {
+      if (!dataframe.columns.contains(column)) dataframe.withColumn(column, lit(0))
+      else dataframe
+    }
+    )
+  }
+
+  val allIAB =
+    List("IAB2-15", "IAB19-4", "IAB9-26", "IAB9-18", "IAB8-8", "IAB6-5", "IAB11-4", "IAB9-29", "IAB9", "IAB15-6", "IAB2-4", "IAB17-41", "IAB8-7", "IAB13-3", "IAB9-1", "IAB17-30", "IAB24", "IAB7-39", "IAB9-8", "IAB2-5", "IAB9-22", "IAB4-5", "IAB6", "IAB9-5", "IAB17-11", "IAB17-17", "IAB9-12", "IAB1-5", "IAB19", "IAB19-16", "IAB9-11", "IAB17-4", "IAB13", "IAB9-23", "IAB9-14", "IAB17-28", "IAB17-37", "IAB4", "IAB14-7", "IAB17-1", "IAB7-44", "IAB9-25", "IAB6-2", "IAB10-2", "IAB1-7", "IAB11-2", "IAB17", "IAB15-1", "IAB8", "IAB17-35", "IAB14-3", "IAB9-30", "IAB18-5", "IAB5", "IAB23-4", "IAB1-1", "IAB17-9", "IAB12", "IAB7-19", "IAB17-29", "IAB9-17", "IAB2-22", "IAB23", "IAB17-36", "IAB9-24", "IAB7-34", "IAB1", "IAB20", "IAB1-6", "IAB9-13", "IAB2-1", "IAB16", "IAB19-28", "IAB9-4", "IAB18-6", "IAB7-45", "IAB19-24", "IAB7-30", "IAB9-20", "IAB15", "IAB3", "IAB17-8", "IAB22", "IAB7-37", "IAB15-4", "IAB2-17", "IAB17-25", "IAB11", "IAB19-6", "IAB8-5", "IAB9-28", "IAB12-3", "IAB2-21", "IAB3-12", "IAB16-5", "IAB26", "IAB19-1", "IAB6-7", "IAB1-2", "IAB9-27", "IAB12-2", "IAB13-9", "IAB17-26", "IAB9-16", "IAB18-3", "IAB17-15", "IAB17-39", "IAB9-31", "IAB20-18", "IAB19-18", "IAB14-6", "IAB17-2", "IAB19-29", "IAB9-3", "IAB2", "IAB4-9", "IAB2-3", "IAB7-31", "IAB14", "IAB9-19", "IAB21", "IAB19-2", "IAB19-5", "IAB15-10", "IAB17-12", "IAB18-1", "IAB19-14", "IAB10", "IAB16-3", "IAB9-2", "IAB25", "IAB7-36", "IAB7", "IAB10-7", "IAB9-6", "IAB17-27", "IAB9-7", "IAB18-4", "IAB8-9", "IAB3-11", "IAB9-21", "IAB17-40", "IAB14-1", "IAB1-4", "IAB9-10", "IAB7-1", "IAB12-1", "IAB22-3", "IAB18", "IAB9-15", "IAB3-1", "IAB7-32", "IAB17-16", "IAB17-38", "IAB17-44", "IAB17-3", "IAB15-8")
+
 }
