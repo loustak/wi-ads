@@ -29,7 +29,7 @@ object Main extends App {
     }
 
     //trainModel(spark, "data/sample-10000.json")
-    prediction(spark, "data/sample-10000.json")
+    //prediction(spark, "data/sample-10000.json")
     spark.close()
   }
 }

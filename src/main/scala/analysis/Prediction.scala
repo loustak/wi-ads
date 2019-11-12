@@ -30,12 +30,9 @@ object Prediction {
 
     val result = predictions.select("label", "id")
 
-    rawData.select("size").distinct().show()
     val dataSizeCleaned = cleanSizeColumn(rawData, sparkSession)
 
     val resultJoin = dataSizeCleaned.join(result, "id")
-
-    resultJoin.show()
 
     val reorderedColumnNames: Array[String] = Array("label") ++ rawData.columns
     val resultFinal: DataFrame = resultJoin.select(reorderedColumnNames.head, reorderedColumnNames.tail: _*).drop("id")
