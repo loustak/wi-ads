@@ -15,11 +15,10 @@ object Train {
     println("NUMBER OF LINES BEFORE CLEAN: " + rawData.count())
 
     //Keep only columns that we need for ML
-    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label","type")
+    val selectedData = rawData.select("os", "network", "appOrSite", "timestamp", "bidfloor", "size", "interests", "label", "type")
     val cleanedData = cleanData(selectedData, sparkSession)
 
     println("NUMBER OF LINES AFTER CLEAN: " + cleanedData.count())
-
     analyse(cleanedData)
   }
 

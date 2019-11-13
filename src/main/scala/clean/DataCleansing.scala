@@ -26,8 +26,8 @@ object DataCleansing {
 
   // Add a new category "other" for values where occurrence is less than the limit treshold
   def mainLabelsVSother(src: DataFrame, columnName: String) : DataFrame = {
-    //val treshold = 100000
-    val treshold = 100
+    val treshold = 100000
+    //val treshold = 100
 
     val counts = src.groupBy(columnName).count()
     val joined = src.join(counts, Seq(columnName))
@@ -48,13 +48,13 @@ object DataCleansing {
   def cleanNetworkColumn(src: DataFrame): DataFrame = {
     val mostOccuringValue = getMostOccuringValue(src,"network")
     val newSrc = src.withColumn("network",
-      when(src.col("network").isNull,mostOccuringValue)
-        .when(src.col("network") === "",mostOccuringValue)
+      when(src.col("network").isNull || src.col("network") == "" || src.col("network") === "", mostOccuringValue)
         .otherwise(src.col("network")))
 
     val datawithNetworkCleaned = newSrc.withColumn("network", udfCleanNetworkColumn(newSrc("network")))
     val newDF = tolowerCase(datawithNetworkCleaned, "network")
-    newDF
+    val resultDF = newDF.na.replace("network", Map("" -> "NA"))
+    resultDF
   }
 
   def getMostOccuringValue(src: DataFrame, column: String): String = {
@@ -221,7 +221,7 @@ object DataCleansing {
   }
 
   def putWeightsOnColumn(src: DataFrame): DataFrame = {
-    val ratio = 0.9885
+    val ratio = 0.985
     src.withColumn("weights", when(src.col("label").contains(1), ratio).otherwise(1 - ratio))
   }
 
@@ -241,7 +241,7 @@ object DataCleansing {
 
   def addMissingIAB(src: DataFrame, columns: Array[String]): DataFrame = {
     columns.foldLeft(src)((dataframe, column) => {
-      if (!dataframe.columns.contains(column)) dataframe.withColumn(column, lit(0))
+      if (!dataframe.columns.contains(column)) dataframe.withColumn(column, lit(0.toString))
       else dataframe
     }
     )

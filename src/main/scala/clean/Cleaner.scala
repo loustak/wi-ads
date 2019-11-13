@@ -40,6 +40,7 @@ object Cleaner {
         val dataWithTypeCleaned = cleanTypeColumn(dataWithLabelCleaned)
 
         println("av dataWithSizeCleaned: " + dataWithTypeCleaned.count())
+
         cleanSizeColumn(dataWithTypeCleaned, sparkSession)
     }
 }

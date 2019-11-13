@@ -31,11 +31,11 @@ object Models {
 
   }
 
-  def logiscticTest(train1: DataFrame): PipelineModel = {
-    val train = train1.na.replace("network", Map("" -> "NA"))
+  def logiscticTest(train: DataFrame): PipelineModel = {
+
 
     // Get ColumnIndexer
-    val arrayIndexer = indexerColumn(train.columns.toList.filter(x => x != "weights").filter(x => x != "label"))
+    val arrayIndexer = indexerColumn(train.columns.toList.filter(x => x != "weights").filter(x => x != "label").filter(x => x != "interests"))
     val allColumns = arrayIndexer.map(_.getOutputCol)
 
     val arrayEncoder = encoderColumn(allColumns)
